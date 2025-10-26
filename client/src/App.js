@@ -1,9 +1,5 @@
 // src/App.js
 import React, { useState, useEffect } from "react";
-import Header from "./components/Header";
-import Sidebar from "./components/Sidebar";
-import AddModal from "./components/AddModal";
-import api from "./services/api";
 import { Toast, ToastContainer, Container, Row, Col } from "react-bootstrap";
 import Editor from "react-simple-code-editor";
 import Prism from "prismjs";
@@ -12,27 +8,46 @@ import "prismjs/components/prism-javascript";
 import "prismjs/components/prism-python";
 import "prismjs/components/prism-jsx";
 
-function App() {
-  const [categories, setCategories] = useState([]);
-  const [selectedCat, setSelectedCat] = useState(null);
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [modalType, setModalType] = useState(null);
-  const [toastMessage, setToastMessage] = useState("");
-  const [toastVariant, setToastVariant] = useState("success");
-  const [selectedTopic, setSelectedTopic] = useState(null);
+// Components
+import Header from "./components/Header";
+import Sidebar from "./components/Sidebar";
+import AddModal from "./components/AddModal";
+import api from "./services/api";
 
-  const highlightCode = (code) => {
-    if (!code) return "";
-    const language = selectedTopic?.language || "javascript";
-    return Prism.highlight(
-      code,
-      Prism.languages[language] || Prism.languages.javascript,
-      language
-    );
-  };
+// Styles
+const editorStyles = {
+  container: {
+    border: "1px solid #ced4da",
+    borderRadius: "0.25rem",
+    maxHeight: "500px",
+    backgroundColor: "#2d2d2d",
+    overflow: "auto",
+    padding: 10,
+  },
+  editor: {
+    fontFamily: '"Fira code", "Fira Mono", monospace',
+    fontSize: 14,
+    backgroundColor: "#2d2d2d",
+    color: "#ccc",
+    minHeight: "100px",
+    maxHeight: "500px",
+    display: "block",
+    overflow: "auto",
+    whiteSpace: "pre",
+  },
+  topicHeader: {
+    backgroundColor: "#16e6b8ff",
+    borderRadius: "2px",
+    padding: "10px",
+  },
+  output: {
+    maxHeight: 200,
+    overflow: "auto",
+  },
+};
 
-  // Add this near the top of your App.js, after the imports
-const styles = `
+// Custom scrollbar styles
+const scrollbarStyles = `
   .editor-scrollable textarea {
     min-height: 100px !important;
     max-height: 500px !important;
@@ -44,7 +59,6 @@ const styles = `
     overflow-y: auto !important;
   }
   
-  /* Custom scrollbar styling */
   .editor-scrollable *::-webkit-scrollbar {
     width: 8px;
     height: 8px;
@@ -64,12 +78,71 @@ const styles = `
   }
 `;
 
-// Add this right after the styles constant
+// Apply scrollbar styles
 const styleSheet = document.createElement("style");
-styleSheet.innerText = styles;
+styleSheet.innerText = scrollbarStyles;
 document.head.appendChild(styleSheet);
 
-  // fetch categories on mount (and when selectedCat changes)
+// Topic View Component
+const TopicView = ({ topic }) => {
+  if (!topic) return null;
+
+  const highlightCode = (code) => {
+    if (!code) return "";
+    const language = topic?.language || "javascript";
+    return Prism.highlight(
+      code,
+      Prism.languages[language] || Prism.languages.javascript,
+      language
+    );
+  };
+
+  return (
+    <div>
+      <h6 className="p-2 mb-3" style={editorStyles.topicHeader}>
+        Q{topic.topicNumber || 1}. {topic.name}
+      </h6>
+      <div style={editorStyles.container}>
+        <Editor
+          value={topic.codebase || ""}
+          onValueChange={() => {}}
+          highlight={highlightCode}
+          padding={10}
+          style={editorStyles.editor}
+          readOnly={true}
+        />
+      </div>
+
+      {topic.output && (
+        <div className="mt-3">
+          <h6>Output:</h6>
+          <pre
+            className="p-3 bg-light border rounded"
+            style={editorStyles.output}
+          >
+            {topic.output}
+          </pre>
+        </div>
+      )}
+
+      <div className="mt-2 text-muted">
+        Language: {topic.language || "javascript"}
+      </div>
+    </div>
+  );
+};
+
+// Main App Component
+function App() {
+  const [categories, setCategories] = useState([]);
+  const [selectedCat, setSelectedCat] = useState(null);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [modalType, setModalType] = useState(null);
+  const [toastMessage, setToastMessage] = useState("");
+  const [toastVariant, setToastVariant] = useState("success");
+  const [selectedTopic, setSelectedTopic] = useState(null);
+
+  // Fetch categories
   useEffect(() => {
     const fetchCategories = async () => {
       try {
@@ -80,15 +153,16 @@ document.head.appendChild(styleSheet);
         }
       } catch (error) {
         console.error("Failed to fetch categories:", error);
+        showToast("Failed to fetch categories", "danger");
       }
     };
 
     fetchCategories();
   }, [selectedCat]);
 
-  const openAddModal = (type) => {
-    setModalType(type);
-    setShowAddModal(true);
+  const showToast = (message, variant = "success") => {
+    setToastMessage(message);
+    setToastVariant(variant);
   };
 
   const handleAdd = async (payload) => {
@@ -98,138 +172,61 @@ document.head.appendChild(styleSheet);
 
       if (modalType === "category") {
         setCategories((prev) => [...prev, response.data.category]);
-        setToastMessage("Category added successfully");
+        showToast("Category added successfully");
       } else {
-        setToastMessage("Topic added successfully");
+        showToast("Topic added successfully");
       }
 
-      setToastVariant("success");
       setShowAddModal(false);
-      try {
-        const res = await api.get("/forum");
-        setCategories(res.data);
-      } catch (e) {
-        console.error("Failed to refresh categories:", e);
-      }
+
+      // Refresh categories
+      const res = await api.get("/forum");
+      setCategories(res.data);
     } catch (error) {
-      setToastMessage("Failed to add " + modalType);
-      setToastVariant("danger");
+      showToast(`Failed to add ${modalType}`, "danger");
     }
   };
 
   const handleTopicSelect = (topic, category) => {
     setSelectedCat(category);
-    setSelectedTopic(topic);
+    const topicIndex =
+      category.topics?.findIndex((t) => t._id === topic._id) ?? -1;
+    setSelectedTopic({ ...topic, topicNumber: topicIndex + 1 });
   };
 
   return (
     <>
-      <Header onAdd={openAddModal} />
+      <Header
+        onAdd={(type) => {
+          setModalType(type);
+          setShowAddModal(true);
+        }}
+      />
       <Container fluid>
         <Row>
-          <Col md={3}>
+          <Col md={4}>
             <Sidebar
               categories={categories}
               onSelectCategory={setSelectedCat}
               onSelectTopic={handleTopicSelect}
             />
           </Col>
-          {/* <Col md={9} className="p-3">
-            <h4>Welcome to the Forum</h4>
-            {selectedCat ? (
-              <div>
-                <h5>Topics in: {selectedCat.name}</h5>
-                <ul>
-                  {(selectedCat.topics ?? []).map((topic) => (
-                    <li key={topic._id}>{topic.name} </li>
-                  ))}
-                </ul>
-              </div>
-            ) : (
-              <p>Please select a category to see topics.</p>
-            )}
-          </Col> */}
-          {/* <Col md={9} className="p-3">
-            <h4>Welcome to the Forum</h4>
-            {selectedCat ? (
-              <div>
-                <h5>Topics in: {selectedCat.name}</h5>
-                <ul style={{ listStyleType: "none", padding: 0 }}>
-                  {(selectedCat.topics ?? []).map((topic) => (
-                    <li key={topic._id} className="mb-4">
-                      <strong>{topic.name}</strong>
-                      <textarea
-                        value={topic.codebase}
-                        readOnly
-                        rows={5}
-                        className="form-control mt-2"
-                        style={{
-                          fontFamily: "monospace",
-                          background: "#f8f9fa",
-                        }}
-                      />
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ) : (
-              <p>Please select a category to see topics.</p>
-            )}
-          </Col> */}
-          <Col md={9} className="p-3">
-            <h4>Welcome to the Forum</h4>
+          <Col md={7} className="p-3">
             {selectedTopic ? (
-              <div>
-                <h5>{selectedTopic.name}</h5>
-                <div
-                  style={{
-                    border: "1px solid #ced4da",
-                    borderRadius: "0.25rem",
-                    maxHeight: "500px",
-                    backgroundColor: "#2d2d2d",
-                    overflow: "auto",
-                    padding: 10,
-                  }}
-                >
-                  <Editor
-                    value={selectedTopic.codebase || ""}
-                    onValueChange={() => {}} // read-only
-                    highlight={highlightCode}
-                    padding={10}
-                    style={{
-                      fontFamily: '"Fira code", "Fira Mono", monospace',
-                      fontSize: 14,
-                      backgroundColor: "#2d2d2d",
-                      color: "#ccc",
-                      minHeight: "100px",
-                      maxHeight: "500px",
-                      display: "block",
-                      overflow: "auto",
-                      whiteSpace: "pre",
-                    }}
-                    readOnly={true}
-                  />
-                </div>
-
-                {selectedTopic.output && (
-                  <div className="mt-3">
-                    <h6>Output:</h6>
-                    <pre className="p-3 bg-light border rounded" style={{ maxHeight: 200, overflow: 'auto' }}>
-                      {selectedTopic.output}
-                    </pre>
-                  </div>
-                )}
-
-                <div className="mt-2 text-muted">
-                  Language: {selectedTopic.language || "javascript"}
-                </div>
-              </div>
+              <TopicView topic={selectedTopic} />
             ) : selectedCat ? (
               <div>
                 <h5>Topics in: {selectedCat.name}</h5>
                 <ul>
-                  {(selectedCat.topics ?? []).map((topic) => (
-                    <li key={topic._id}>{topic.name}</li>
+                  {(selectedCat.topics ?? []).map((topic, index) => (
+                    <li
+                      key={topic._id}
+                      onClick={() => handleTopicSelect(topic, selectedCat)}
+                      style={{ cursor: "pointer" }}
+                      className="py-2 border-bottom"
+                    >
+                      {index + 1}. {topic.name}
+                    </li>
                   ))}
                 </ul>
               </div>
@@ -260,7 +257,9 @@ document.head.appendChild(styleSheet);
           delay={3000}
           autohide
         >
-          <Toast.Body className="text-white">{toastMessage}</Toast.Body>
+          <Toast.Body className={toastVariant === "danger" ? "text-white" : ""}>
+            {toastMessage}
+          </Toast.Body>
         </Toast>
       </ToastContainer>
     </>

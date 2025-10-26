@@ -138,7 +138,7 @@ export default function Sidebar({ categories = [], onSelectCategory, onSelectTop
   return (
     <div
       ref={sidebarRef}
-      className="p-3 bg-light"
+      className="p-6 bg-light"
       style={{
         height: "100vh",
         overflowY: "auto",
