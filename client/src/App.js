@@ -12,6 +12,7 @@ import "prismjs/components/prism-jsx";
 import Header from "./components/Header";
 import Sidebar from "./components/Sidebar";
 import AddModal from "./components/AddModal";
+import TopicList from "./components/TopicList";
 import api from "./services/api";
 
 // Styles
@@ -141,6 +142,7 @@ function App() {
   const [toastMessage, setToastMessage] = useState("");
   const [toastVariant, setToastVariant] = useState("success");
   const [selectedTopic, setSelectedTopic] = useState(null);
+  const [showTopicList, setShowTopicList] = useState(false);
 
   // Fetch categories
   useEffect(() => {
@@ -201,6 +203,7 @@ function App() {
           setModalType(type);
           setShowAddModal(true);
         }}
+        onToggleTopicList={() => setShowTopicList(prev => !prev)}
       />
       <Container fluid>
         <Row>
@@ -212,7 +215,15 @@ function App() {
             />
           </Col>
           <Col md={7} className="p-3">
-            {selectedTopic ? (
+            {showTopicList ? (
+              <TopicList
+                categories={categories}
+                onSelectTopic={(topic, category) => {
+                  handleTopicSelect(topic, category);
+                  setShowTopicList(false);
+                }}
+              />
+            ) : selectedTopic ? (
               <TopicView topic={selectedTopic} />
             ) : selectedCat ? (
               <div>
