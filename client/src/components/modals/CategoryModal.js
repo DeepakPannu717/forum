@@ -92,9 +92,28 @@ export default function CategoryModal({
               >
                 <option value="">Select parent category</option>
                 {categories.map((cat) => (
-                  <option key={cat._id} value={cat._id}>
-                    {cat.name}
-                  </option>
+                  <React.Fragment key={cat._id}>
+                    {/* Main category */}
+                    <option value={cat._id}>
+                      {cat.name}
+                    </option>
+                    
+                    {/* First level subcategories */}
+                    {cat.subcategories?.map(subcat => (
+                      <React.Fragment key={subcat._id}>
+                        <option value={subcat._id}>
+                          ↳ {subcat.name}
+                        </option>
+                        
+                        {/* Second level subcategories */}
+                        {subcat.subcategories?.map(subsubcat => (
+                          <option key={subsubcat._id} value={subsubcat._id}>
+                            ↳↳ {subsubcat.name}
+                          </option>
+                        ))}
+                      </React.Fragment>
+                    ))}
+                  </React.Fragment>
                 ))}
               </Form.Select>
             </Form.Group>

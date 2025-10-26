@@ -4,7 +4,7 @@ import {
   Container, Row, Col, Modal, Form, Button, Alert
 } from 'react-bootstrap';
 import {
-  getForumData, createCategory, createTopic
+  getCategories, createCategory, createTopic
 } from '../services/api';
 import Header from '../components/Header';
 import Sidebar from '../components/Sidebar';
@@ -23,8 +23,8 @@ export default function ForumPage() {
 
   const fetchCategories = async () => {
     try {
-      const data = await getForumData();
-      setCategories(data.categories || []);
+      const categories = await getCategories();
+      setCategories(categories || []);
     } catch (err) {
       console.error("Failed to fetch categories:", err);
     }
@@ -34,6 +34,9 @@ export default function ForumPage() {
     fetchCategories();
   }, []);
 
+  const [parentCategoryId, setParentCategoryId] = useState("");
+  const [isSubcategory, setIsSubcategory] = useState(false);
+
   const handleAddCategory = async () => {
     if (!categoryName.trim()) {
       alert("Please enter category name");
@@ -41,16 +44,37 @@ export default function ForumPage() {
       return;
     }
 
+    if (isSubcategory && !parentCategoryId) {
+      alert("Please select a parent category");
+      return;
+    }
+
     try {
-      const res = await createCategory(categoryName.trim());
-      setCategorySuccess(`Category "${res.category.name}" created successfully!`);
+      const categoryData = isSubcategory 
+        ? { name: categoryName.trim(), parentId: parentCategoryId }
+        : { name: categoryName.trim() };
+
+      const res = await createCategory(categoryData);
+      
+      setCategorySuccess(
+        isSubcategory
+          ? `Subcategory "${res.category.name}" created successfully!`
+          : `Category "${res.category.name}" created successfully!`
+      );
+      
+      // Reset form
       setCategoryName("");
+      setParentCategoryId("");
+      setIsSubcategory(false);
       setShowCategoryModal(false);
+      
+      // Refresh categories
       fetchCategories();
+      
       setTimeout(() => setCategorySuccess(""), 3000);
     } catch (err) {
       console.error(err);
-      alert("Error creating category. Make sure it’s unique.");
+      alert(err.response?.data?.message || "Error creating category. Make sure it's unique.");
     }
   };
 
@@ -98,6 +122,77 @@ export default function ForumPage() {
       <Footer />
 
       {/* Category Modal */}
+      <Modal show={showCategoryModal} onHide={() => setShowCategoryModal(false)}>
+        <Modal.Header closeButton>
+          <Modal.Title>{isSubcategory ? 'Add Subcategory' : 'Add Category'}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form>
+            {isSubcategory && (
+              <Form.Group className="mb-3">
+                <Form.Label>Parent Category</Form.Label>
+                <Form.Select
+                  value={parentCategoryId}
+                  onChange={(e) => setParentCategoryId(e.target.value)}
+                >
+                  <option value="">Select parent category</option>
+                  {categories.map((cat) => (
+                    <React.Fragment key={cat._id}>
+                      {/* Main category */}
+                      <option value={cat._id}>
+                        {cat.name}
+                      </option>
+                      
+                      {/* First level subcategories */}
+                      {cat.subcategories?.map(subcat => (
+                        <React.Fragment key={subcat._id}>
+                          <option value={subcat._id}>
+                            ↳ {subcat.name}
+                          </option>
+                          
+                          {/* Second level subcategories */}
+                          {subcat.subcategories?.map(subsubcat => (
+                            <option key={subsubcat._id} value={subsubcat._id}>
+                              ↳↳ {subsubcat.name}
+                            </option>
+                          ))}
+                        </React.Fragment>
+                      ))}
+                    </React.Fragment>
+                  ))}
+                </Form.Select>
+              </Form.Group>
+            )}
+            
+            <Form.Group className="mb-3">
+              <Form.Label>{isSubcategory ? 'Subcategory Name' : 'Category Name'}</Form.Label>
+              <Form.Control
+                type="text"
+                value={categoryName}
+                onChange={(e) => setCategoryName(e.target.value)}
+                placeholder={`Enter ${isSubcategory ? 'subcategory' : 'category'} name`}
+                ref={categoryInputRef}
+              />
+            </Form.Group>
+          </Form>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button 
+            variant="secondary" 
+            onClick={() => {
+              setIsSubcategory(!isSubcategory);
+            }}
+          >
+            Switch to {isSubcategory ? 'Category' : 'Subcategory'}
+          </Button>
+          <Button variant="secondary" onClick={() => setShowCategoryModal(false)}>
+            Cancel
+          </Button>
+          <Button variant="primary" onClick={handleAddCategory}>
+            Add {isSubcategory ? 'Subcategory' : 'Category'}
+          </Button>
+        </Modal.Footer>
+      </Modal>
       <Modal show={showCategoryModal} onHide={() => setShowCategoryModal(false)}>
         <Modal.Header closeButton>
           <Modal.Title>Add Category</Modal.Title>

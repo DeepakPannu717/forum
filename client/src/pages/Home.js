@@ -20,7 +20,8 @@ export default function Home() {
   const fetchCategories = async () => {
     try {
       const data = await getForumData();
-      setCategories(data.categories || []);
+      // getForumData now returns an array of categories
+      setCategories(Array.isArray(data) ? data : data?.categories || []);
     } catch (err) {
       console.error("Error fetching categories", err);
     }
@@ -34,8 +35,8 @@ export default function Home() {
     }
 
     try {
-      const res = await createCategory(categoryName.trim());
-      setCategorySuccess(`Category "${res.category.name}" created successfully!`);
+  const res = await createCategory({ name: categoryName.trim() });
+  setCategorySuccess(`Category "${res.category.name}" created successfully!`);
       setCategoryName("");
       setShowCategoryModal(false);
       fetchCategories();

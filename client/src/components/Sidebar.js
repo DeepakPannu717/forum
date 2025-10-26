@@ -75,6 +75,7 @@ export default function Sidebar({ categories = [], onSelectCategory, onSelectTop
   const sidebarRef = useRef(null);
   const dragState = useRef({ startX: 0, startWidth: 0, dragging: false });
   const [width, setWidth] = useState(280); // default width
+  const [expandedCategories, setExpandedCategories] = useState({});
   const minWidth = 80;
   const maxWidth = 800;
 
@@ -167,18 +168,20 @@ export default function Sidebar({ categories = [], onSelectCategory, onSelectTop
       </div>
 
       <Accordion>
-        {categories.map((category, idx) => (
-          <Accordion.Item eventKey={String(idx)} key={category._id || idx}>
-            <Accordion.Header onClick={() => onSelectCategory && onSelectCategory(category)}>
+        {categories.filter(cat => !cat.parentId).map((category, idx) => (
+          <Accordion.Item 
+            eventKey={String(idx)} 
+            key={category._id || idx}
+          >
+            <Accordion.Header 
+              onClick={() => onSelectCategory && onSelectCategory(category)}
+            >
               {category.name}
             </Accordion.Header>
 
-            <Accordion.Body>
+            <Accordion.Body className="p-0">
+              {/* Category's own topics */}
               <ListGroup variant="flush">
-                {(category.topics ?? []).length === 0 && (
-                  <ListGroup.Item className="text-muted">No topics</ListGroup.Item>
-                )}
-
                 {(category.topics ?? []).map((topic) => (
                   <ListGroup.Item
                     action
@@ -190,6 +193,46 @@ export default function Sidebar({ categories = [], onSelectCategory, onSelectTop
                   </ListGroup.Item>
                 ))}
               </ListGroup>
+
+              {/* Subcategories */}
+              {(category.subcategories ?? []).map((subcat) => (
+                <div key={subcat._id} className="ms-3 border-start">
+                  <Accordion>
+                    <Accordion.Item eventKey="0">
+                      <Accordion.Header 
+                        onClick={() => onSelectCategory && onSelectCategory(subcat)}
+                      >
+                        {subcat.name}
+                      </Accordion.Header>
+                      <Accordion.Body className="p-0">
+                        <ListGroup variant="flush">
+                          {(subcat.topics ?? []).length === 0 ? (
+                            <ListGroup.Item className="text-muted">No topics</ListGroup.Item>
+                          ) : (
+                            subcat.topics.map((topic) => (
+                              <ListGroup.Item
+                                action
+                                key={topic._id}
+                                onClick={() => onSelectTopic && onSelectTopic(topic, subcat)}
+                                style={{ cursor: "pointer" }}
+                              >
+                                {topic.name}
+                              </ListGroup.Item>
+                            ))
+                          )}
+                        </ListGroup>
+                      </Accordion.Body>
+                    </Accordion.Item>
+                  </Accordion>
+                </div>
+              ))}
+
+              {/* Show "No content" if no topics and no subcategories */}
+              {(category.topics ?? []).length === 0 && (category.subcategories ?? []).length === 0 && (
+                <ListGroup variant="flush">
+                  <ListGroup.Item className="text-muted">No content</ListGroup.Item>
+                </ListGroup>
+              )}
             </Accordion.Body>
           </Accordion.Item>
         ))}

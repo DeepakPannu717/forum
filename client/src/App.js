@@ -13,7 +13,7 @@ import Header from "./components/Header";
 import Sidebar from "./components/Sidebar";
 import AddModal from "./components/AddModal";
 import TopicList from "./components/TopicList";
-import api from "./services/api";
+import api, { getForumData } from "./services/api";
 
 // Styles
 const editorStyles = {
@@ -148,9 +148,9 @@ function App() {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const res = await api.get("/forum");
-        setCategories(res.data);
-        if (selectedCat && !res.data.find((c) => c._id === selectedCat._id)) {
+        const data = await getForumData();
+        setCategories(data || []);
+        if (selectedCat && !((data || []).find((c) => c._id === selectedCat._id))) {
           setSelectedCat(null);
         }
       } catch (error) {
@@ -181,9 +181,9 @@ function App() {
 
       setShowAddModal(false);
 
-      // Refresh categories
-      const res = await api.get("/forum");
-      setCategories(res.data);
+  // Refresh categories
+  const refreshed = await getForumData();
+  setCategories(refreshed || []);
     } catch (error) {
       showToast(`Failed to add ${modalType}`, "danger");
     }
@@ -266,7 +266,6 @@ function App() {
           show={!!toastMessage}
           onClose={() => setToastMessage("")}
           delay={3000}
-          autohide
         >
           <Toast.Body className={toastVariant === "danger" ? "text-white" : ""}>
             {toastMessage}
