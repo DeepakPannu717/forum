@@ -36,6 +36,10 @@ export const getCategories = async () => {
   return res.data;
 };
 
+export const updateTopic = async (topicId, topicData) => {
+  const res = await axios.put(`${API_URL}/topic/${topicId}`, topicData);
+  return res.data;
+};
 
 
 const api = axios.create({

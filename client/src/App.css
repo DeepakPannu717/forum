@@ -36,3 +36,36 @@
     transform: rotate(360deg);
   }
 }
+
+/* Custom Topic Modal Styles */
+.modal-90w {
+  min-width: 98%;
+  max-width: 1800px;
+  width: 98vw !important;
+  margin: 0.5rem auto;
+}
+
+.custom-topic-modal .modal-content {
+  min-height: 90vh;
+  background-color: #fff;
+}
+
+.custom-topic-modal pre {
+  margin: 0;
+  padding: 15px;
+  border-radius: 4px;
+}
+
+.custom-topic-modal .modal-body {
+  padding: 20px;
+}
+
+.custom-topic-modal .modal-header {
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.custom-topic-modal .modal-footer {
+  background-color: #f8f9fa;
+  border-top: 1px solid #dee2e6;
+}
