@@ -75,7 +75,6 @@ export default function Sidebar({ categories = [], onSelectCategory, onSelectTop
   const sidebarRef = useRef(null);
   const dragState = useRef({ startX: 0, startWidth: 0, dragging: false });
   const [width, setWidth] = useState(280); // default width
-  const [expandedCategories, setExpandedCategories] = useState({});
   const minWidth = 80;
   const maxWidth = 800;
 

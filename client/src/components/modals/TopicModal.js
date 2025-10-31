@@ -1,6 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Modal, Form, Button } from 'react-bootstrap';
 import { createTopic, updateTopic } from '../../services/api';
+import Editor from "react-simple-code-editor";
+import Prism from "prismjs";
+import "prismjs/themes/prism-tomorrow.css";
+import "prismjs/components/prism-javascript";
+import "prismjs/components/prism-python";
 
 export default function TopicModal({ 
   show, 
@@ -18,6 +23,13 @@ export default function TopicModal({
     status: 'active'
   });
 
+  const highlightCode = (code) =>
+    Prism.highlight(
+      code || "",
+      Prism.languages[formData.language] || Prism.languages.javascript,
+      formData.language
+    );
+
   useEffect(() => {
     // If topic is provided, we're in edit mode
     if (topic) {
@@ -28,6 +40,16 @@ export default function TopicModal({
         codebase: topic.codebase || '',
         output: topic.output || '',
         status: topic.status || 'active'
+      });
+    } else {
+      // Reset form for new topic
+      setFormData({
+        name: '',
+        categoryId: '',
+        language: 'javascript',
+        codebase: '',
+        output: '',
+        status: 'active'
       });
     }
   }, [topic]);
@@ -101,23 +123,47 @@ export default function TopicModal({
               onChange={handleChange}
             >
               <option value="javascript">JavaScript</option>
+              <option value="jsx">JSX/React</option>
               <option value="python">Python</option>
               <option value="java">Java</option>
-              <option value="csharp">C#</option>
+              <option value="c">C</option>
               <option value="cpp">C++</option>
+              <option value="csharp">C#</option>
             </Form.Select>
           </Form.Group>
 
           <Form.Group className="mb-3">
             <Form.Label>Code</Form.Label>
-            <Form.Control
-              as="textarea"
-              name="codebase"
-              value={formData.codebase}
-              onChange={handleChange}
-              rows={6}
-              placeholder="Enter your code here"
-            />
+            <div
+              style={{
+                border: "1px solid #ced4da",
+                borderRadius: "0.25rem",
+                height: "400px", // Fixed height for scrolling
+                fontFamily: "monospace",
+                fontSize: 14,
+                padding: "10px",
+                backgroundColor: "#2d2d2d",
+                color: "#ccc",
+                overflow: "auto" // Enable scrolling
+              }}
+            >
+              <Editor
+                value={formData.codebase}
+                onValueChange={(codebase) =>
+                  setFormData((prev) => ({ ...prev, codebase }))
+                }
+                highlight={highlightCode}
+                padding={10}
+                style={{
+                  fontFamily: '"Fira code", monospace',
+                  fontSize: 14,
+                  outline: 0,
+                  height: "100%", // Take full height of parent
+                  overflow: "visible", // Show all content
+                  minHeight: "380px" // Allow content to expand
+                }}
+              />
+            </div>
           </Form.Group>
 
           <Form.Group className="mb-3">

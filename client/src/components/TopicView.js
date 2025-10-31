@@ -1,23 +1,9 @@
 import React from 'react';
 import { Card } from 'react-bootstrap';
-import Prism from 'prismjs';
-import 'prismjs/themes/prism-tomorrow.css';
+import { highlightCode } from '../utils/codeHighlight';
 
 export default function TopicView({ topic }) {
   if (!topic) return null;
-
-  const highlightCode = (code, language) => {
-    if (!code) return '';
-    try {
-      return Prism.highlight(
-        code,
-        Prism.languages[language] || Prism.languages.javascript,
-        language
-      );
-    } catch (error) {
-      return code;
-    }
-  };
 
   return (
     <Card className="h-100">

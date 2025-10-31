@@ -7,7 +7,6 @@ export const getForumData = async () => {
   const res = await axios.get(`${API_URL}/forum`);
   // Normalize to always return an array of categories
   // Backend may return an array or an object { categories: [...] }
-  console.log(res.data, 'getForumData response>>>');
   if (Array.isArray(res.data)) return res.data;
   if (res.data && Array.isArray(res.data.categories)) return res.data.categories;
   // Fallback: try to extract categories field or return empty array

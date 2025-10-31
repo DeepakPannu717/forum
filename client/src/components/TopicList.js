@@ -1,11 +1,9 @@
 import React, { useState } from 'react';
 import { Table, Modal, Button, Pagination, Form } from 'react-bootstrap';
+import { Pencil, Eye } from 'react-bootstrap-icons';
 import { format } from 'date-fns';
-import Prism from 'prismjs';
 import TopicModal from './modals/TopicModal';
-import 'prismjs/components/prism-javascript';
-import 'prismjs/components/prism-python';
-import 'prismjs/components/prism-jsx';
+import { highlightCode } from '../utils/codeHighlight';
 
 export default function TopicList({ categories, onSelectTopic }) {
   // Helper function to recursively collect all topics from categories and subcategories
@@ -16,7 +14,8 @@ export default function TopicList({ categories, onSelectTopic }) {
         cat.topics.forEach(topic => {
           allTopics.push({
             ...topic,
-            categoryName: parentCat ? `${parentCat.name} > ${cat.name}` : cat.name,
+            categoryName: parentCat ? `${parentCat.name}` : cat.name,
+            // categoryName: parentCat ? `${parentCat.name} > ${cat.name}` : cat.name,
             category: {
               ...cat,
               parentId: parentCat ? parentCat._id : null
@@ -79,16 +78,8 @@ export default function TopicList({ categories, onSelectTopic }) {
     setActiveTopic(null);
   };
 
-  const highlightCode = (code, language = 'javascript') => {
-    try {
-      return Prism.highlight(
-        code || '',
-        Prism.languages[language] || Prism.languages.javascript,
-        language
-      );
-    } catch (e) {
-      return code || '';
-    }
+  const renderHighlightedCode = (code, language = 'javascript') => {
+    return { __html: highlightCode(code, language) };
   };
 
   const handleEditSuccess = (updatedTopic) => {
@@ -151,18 +142,27 @@ export default function TopicList({ categories, onSelectTopic }) {
           <option value={10}>10 / page</option>
           <option value={20}>20 / page</option>
           <option value={50}>50 / page</option>
+          <option value={100}>100 / page</option>
         </Form.Select>
       </div>
 
-      <Table striped bordered hover responsive>
-        <thead>
+      <Table 
+        striped 
+        bordered 
+        hover 
+        responsive
+        className="align-middle table-custom"
+      >
+        <thead className="bg-light">
           <tr>
-            <th>#</th>
-            <th>Category</th>
-            <th>Topic</th>
-            <th>Status</th>
-            <th>Language</th>
-            <th>Created Date</th>
+            <th className="text-center" style={{ width: '50px' }}>#</th>
+            <th style={{ minWidth: '250px' }}>Topic</th>
+            <th style={{ minWidth: '250px' }}>Category</th>
+            <th style={{ minWidth: '150px' }}>SubCategory</th>
+            <th style={{ width: '80px' }}>Status</th>
+            <th style={{ width: '100px' }}>Language</th>
+            {/* <th style={{ width: '120px' }}>Created Date</th> */}
+            <th className="text-center" style={{ width: '100px' }}>Action</th>
           </tr>
         </thead>
         <tbody>
@@ -190,35 +190,76 @@ export default function TopicList({ categories, onSelectTopic }) {
             const paged = filtered.slice(start, start + pageSize);
 
             return paged.map((topic, idx) => (
-              <tr key={topic._id} className="topic-row">
-                <td>{start + idx + 1}</td>
-                <td>{topic.categoryName}</td>
+              <tr 
+                key={topic._id} 
+                className="topic-row"
+                style={{ 
+                  cursor: 'pointer',
+                  animationDelay: `${idx * 0.05}s`
+                }}
+                onClick={() => openTopicModal(topic)}
+              >
+                <td className="text-center">{start + idx + 1}</td>
                 <td>
-                  <span 
-                    style={{ cursor: 'pointer' }} 
-                    onClick={() => openTopicModal(topic)}
-                  >
-                    {topic.name}
-                  </span>
+                  <div className="d-flex align-items-center">
+                    <div className="topic-name">
+                      {topic.name}
+                    </div>
+                    {topic.codebase && (
+                      <span className="ms-2 text-muted small">
+                        ({topic.codebase.length} characters)
+                      </span>
+                    )}
+                  </div>
                 </td>
                 <td>
-                  <span className={`badge bg-${topic.status === 'active' ? 'success' : 'secondary'}`}>
+                  <div className="text-wrap">{topic.categoryName}</div>
+                </td>
+                <td>
+                  <div className="text-wrap">
+                    {topic.category && topic.category.parentId ? topic.category.name : '-'}
+                  </div>
+                </td>
+                <td className="text-center">
+                  <span className={`badge ${topic.status === 'active' ? 'bg-success-subtle text-success' : topic.status === 'draft' ? 'bg-warning-subtle text-warning' : 'bg-secondary-subtle text-secondary'}`}>
                     {topic.status || 'active'}
                   </span>
                 </td>
-                <td>{topic.language || 'javascript'}</td>
-                <td>{topic.createdAt ? format(new Date(topic.createdAt), 'MMM dd, yyyy') : '-'}</td>
                 <td>
-                  <Button
-                    variant="outline-primary"
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      openTopicModal(topic, true);
-                    }}
-                  >
-                    Edit
-                  </Button>
+                  <span className="badge bg-info-subtle text-info">
+                    {topic.language || 'javascript'}
+                  </span>
+                </td>
+                {/* <td className="text-nowrap">
+                  {topic.createdAt ? format(new Date(topic.createdAt), 'MMM dd, yyyy') : '-'}
+                </td> */}
+                <td>
+                  <div className="d-flex gap-2 justify-content-center">
+                    <Button
+                      variant="outline-secondary"
+                      size="sm"
+                      className="d-flex align-items-center p-1 btn-view"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openTopicModal(topic);
+                      }}
+                      title="View Topic"
+                    >
+                      <Eye size={14} />
+                    </Button>
+                    <Button
+                      variant="outline-primary"
+                      size="sm"
+                      className="d-flex align-items-center p-1 btn-edit"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openTopicModal(topic, true);
+                      }}
+                      title="Edit Topic"
+                    >
+                      <Pencil size={14} />
+                    </Button>
+                  </div>
                 </td>
               </tr>
             ));
@@ -311,7 +352,7 @@ export default function TopicList({ categories, onSelectTopic }) {
               <pre
                 className={`border rounded p-3 language-${(activeTopic.language || 'javascript')}`}
                 style={{ background: '#2d2d2d', color: '#eee', overflowX: 'auto', overflowY: 'auto', maxHeight: '500px', whiteSpace: 'pre' }}
-                dangerouslySetInnerHTML={{ __html: highlightCode(activeTopic.codebase || '', (activeTopic.language || 'javascript')) }}
+                dangerouslySetInnerHTML={renderHighlightedCode(activeTopic.codebase || '', (activeTopic.language || 'javascript'))}
               />
 
               {activeTopic.output && (
