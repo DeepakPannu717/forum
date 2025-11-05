@@ -17,6 +17,7 @@ export default function TopicModal({
   const [formData, setFormData] = useState({
     name: '',
     categoryId: '',
+    subcategoryId: '',
     language: 'javascript',
     codebase: '',
     output: '',
@@ -33,9 +34,30 @@ export default function TopicModal({
   useEffect(() => {
     // If topic is provided, we're in edit mode
     if (topic) {
+      // If the topic object contains nested category info from TopicList
+      // (topic.category._id and topic.category.parentId), prefer that for selection.
+      const hasNestedCategory = !!(topic.category && topic.category._id);
+      let catId = '';
+      let subcatId = '';
+      if (hasNestedCategory) {
+        // If category has parentId, the topic was under a subcategory.
+        if (topic.category.parentId) {
+          catId = topic.category.parentId;
+          subcatId = topic.category._id;
+        } else {
+          catId = topic.category._id;
+          subcatId = '';
+        }
+      } else {
+        // Fallback to flat fields if provided by server
+        catId = topic.categoryId || '';
+        subcatId = topic.subcategoryId || '';
+      }
+
       setFormData({
         name: topic.name || '',
-        categoryId: topic.categoryId || '',
+        categoryId: catId,
+        subcategoryId: subcatId,
         language: topic.language || 'javascript',
         codebase: topic.codebase || '',
         output: topic.output || '',
@@ -46,6 +68,7 @@ export default function TopicModal({
       setFormData({
         name: '',
         categoryId: '',
+        subcategoryId: '',
         language: 'javascript',
         codebase: '',
         output: '',
@@ -77,12 +100,14 @@ export default function TopicModal({
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      [name]: value,
+      // If category changes, reset subcategory selection
+      ...(name === 'categoryId' ? { subcategoryId: '' } : {})
     }));
   };
 
   return (
-    <Modal show={show} onHide={onHide} size="lg">
+    <Modal show={show} onHide={onHide} size="lg" className="custom-topic-modal">
       <Modal.Header closeButton>
         <Modal.Title>{topic ? 'Update Topic' : 'Add New Topic'}</Modal.Title>
       </Modal.Header>
@@ -114,6 +139,29 @@ export default function TopicModal({
               ))}
             </Form.Select>
           </Form.Group>
+
+          {/* Subcategory selector: shown when the selected category has subcategories */}
+          {(() => {
+            const selectedCat = categories.find(c => c._id === formData.categoryId);
+            if (selectedCat && selectedCat.subcategories && selectedCat.subcategories.length > 0) {
+              return (
+                <Form.Group className="mb-3">
+                  <Form.Label>Subcategory</Form.Label>
+                  <Form.Select
+                    name="subcategoryId"
+                    value={formData.subcategoryId}
+                    onChange={handleChange}
+                  >
+                    <option value="">Select Subcategory</option>
+                    {selectedCat.subcategories.map(sub => (
+                      <option key={sub._id} value={sub._id}>{sub.name}</option>
+                    ))}
+                  </Form.Select>
+                </Form.Group>
+              );
+            }
+            return null;
+          })()}
 
           <Form.Group className="mb-3">
             <Form.Label>Language</Form.Label>

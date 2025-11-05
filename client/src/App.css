@@ -45,7 +45,14 @@
 }
 
 .custom-topic-modal .modal-content {
-  min-height: 90vh;
+  min-width: 1183px !important;
+  min-height: 957px !important;
+  background-color: #fff;
+}
+
+.custom-topic-view {
+  min-width: 1183px !important;
+  min-height: 957px !important;
   background-color: #fff;
 }
 

@@ -6,7 +6,7 @@ export default function TopicView({ topic }) {
   if (!topic) return null;
 
   return (
-    <Card className="h-100">
+    <Card className="custom-topic-view">
       <Card.Header>
         <h4>{topic.name}</h4>
       </Card.Header>

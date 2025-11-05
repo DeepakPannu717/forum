@@ -156,7 +156,7 @@ export default function TopicList({ categories, onSelectTopic }) {
         <thead className="bg-light">
           <tr>
             <th className="text-center" style={{ width: '50px' }}>#</th>
-            <th style={{ minWidth: '250px' }}>Topic</th>
+            <th style={{ minWidth: '250px' }}>Topic (Questionnaire)</th>
             <th style={{ minWidth: '250px' }}>Category</th>
             <th style={{ minWidth: '150px' }}>SubCategory</th>
             <th style={{ width: '80px' }}>Status</th>
@@ -207,7 +207,7 @@ export default function TopicList({ categories, onSelectTopic }) {
                     </div>
                     {topic.codebase && (
                       <span className="ms-2 text-muted small">
-                        ({topic.codebase.length} characters)
+                        {/* ({topic.codebase.length} characters) */}
                       </span>
                     )}
                   </div>
@@ -334,11 +334,11 @@ export default function TopicList({ categories, onSelectTopic }) {
       })()}
 
       {/* Topic details modal */}
-      <Modal show={showViewModal} onHide={() => setShowViewModal(false)} size="lg" centered scrollable>
+            <Modal show={showViewModal} onHide={() => setShowViewModal(false)} size="xl" centered scrollable className="custom-topic-modal">
         <Modal.Header closeButton>
-          <Modal.Title>{activeTopic ? activeTopic.name : 'Topic'}</Modal.Title>
+          <Modal.Title>View Topic</Modal.Title>
         </Modal.Header>
-        <Modal.Body style={{ maxHeight: '700px', overflowY: 'auto' }}>
+        <Modal.Body style={{ minHeight: '880px', overflowY: 'auto' }}>
           {activeTopic && (
             <div>
               <div className="mb-2 text-muted">
@@ -350,8 +350,8 @@ export default function TopicList({ categories, onSelectTopic }) {
 
               <h6>Code</h6>
               <pre
-                className={`border rounded p-3 language-${(activeTopic.language || 'javascript')}`}
-                style={{ background: '#2d2d2d', color: '#eee', overflowX: 'auto', overflowY: 'auto', maxHeight: '500px', whiteSpace: 'pre' }}
+                className={`border rounded p-3  language-${(activeTopic.language || 'javascript')}`}
+                style={{ background: '#2d2d2d', color: '#eee', overflowX: 'auto', overflowY: 'auto', maxHeight: '750px', whiteSpace: 'pre' }}
                 dangerouslySetInnerHTML={renderHighlightedCode(activeTopic.codebase || '', (activeTopic.language || 'javascript'))}
               />
 
