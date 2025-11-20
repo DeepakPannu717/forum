@@ -80,19 +80,34 @@ export default function TopicModal({
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      console.log('Submitting form data:', formData);
+      
+      // If using subcategory, use that as the categoryId
+      const submitData = {
+        ...formData,
+        categoryId: formData.subcategoryId || formData.categoryId
+      };
+      
+      console.log('Processing submit with data:', submitData);
       let result;
       if (topic) {
         // Update existing topic
-        result = await updateTopic(topic._id, formData);
+        result = await updateTopic(topic._id, submitData);
       } else {
         // Create new topic
-        result = await createTopic(formData);
+        result = await createTopic(submitData);
       }
+      console.log('Submission successful:', result);
       onSuccess(result);
       onHide();
     } catch (error) {
-      console.error('Error saving topic:', error);
-      alert('Failed to save topic. Please try again.');
+      console.error('Error saving topic:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status,
+        formData
+      });
+      alert(`Failed to save topic: ${error.response?.data?.message || error.message}`);
     }
   };
 

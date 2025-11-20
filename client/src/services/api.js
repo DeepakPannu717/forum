@@ -20,8 +20,8 @@ export const createCategory = async (categoryData) => {
   return res.data;
 };
 
-export const createTopic = async (name, categoryId) => {
-  const res = await axios.post(`${API_URL}/topic`, { name, categoryId });
+export const createTopic = async (topicData) => {
+  const res = await axios.post(`${API_URL}/topic`, topicData);
   return res.data;
 };
 
@@ -36,8 +36,19 @@ export const getCategories = async () => {
 };
 
 export const updateTopic = async (topicId, topicData) => {
-  const res = await axios.put(`${API_URL}/topic/${topicId}`, topicData);
-  return res.data;
+  try {
+    console.log('Updating topic with data:', { topicId, topicData });
+    const res = await axios.put(`${API_URL}/topic/${topicId}`, topicData);
+    console.log('Update response:', res.data);
+    return res.data;
+  } catch (error) {
+    console.error('API Error:', {
+      message: error.message,
+      response: error.response?.data,
+      status: error.response?.status
+    });
+    throw error;
+  }
 };
 
 

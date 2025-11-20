@@ -34,18 +34,36 @@ router.post('/topic', async (req, res) => {
 // Update topic
 router.put('/topic/:id', async (req, res) => {
   try {
-    const { name, categoryId, language, codebase, output, status } = req.body;
+    console.log('Update request received:', {
+      id: req.params.id,
+      body: req.body
+    });
+    
+    const { name, categoryId, subcategoryId, language, codebase, output, status } = req.body;
+    
+    // Validate required fields
+    if (!name || !(categoryId || subcategoryId)) {
+      return res.status(400).json({ 
+        message: 'Name and category are required',
+        receivedData: { name, categoryId, subcategoryId }
+      });
+    }
+
+    const updateData = {
+      name,
+      categoryId: subcategoryId || categoryId,
+      language,
+      codebase,
+      output,
+      status
+    };
+
+    console.log('Attempting to update topic with data:', updateData);
+
     const updatedTopic = await Topic.findByIdAndUpdate(
       req.params.id,
-      {
-        name,
-        categoryId,
-        language,
-        codebase,
-        output,
-        status
-      },
-      { new: true }
+      updateData,
+      { new: true, runValidators: true }
     );
     if (!updatedTopic) {
       return res.status(404).json({ message: 'Topic not found' });
